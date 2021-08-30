@@ -64,7 +64,8 @@ class EasyFloat {
          */
         @JvmStatic
         @JvmOverloads
-        fun show(tag: String? = null) = FloatingWindowManager.visible(true, tag, true)
+        fun show(tag: String? = null, activity: Activity? = null) =
+            FloatingWindowManager.show(activity, tag)
 
         /**
          * 设置当前浮窗是否可拖拽，先获取浮窗的config，后修改相应属性

@@ -59,17 +59,16 @@ internal object FloatingWindowManager {
     fun visible(
         isShow: Boolean,
         tag: String? = null,
-        needShow: Boolean = windowMap[tag]?.config?.needShow ?: true
+        activity: Activity?
     ) {
         if (isShow) {
-            getWindow(tag)?.show()
+            getWindow(tag)?.show(activity)
         } else {
-            getWindow(tag)?.dismiss()
+            getWindow(tag)?.dismiss(false, activity)
         }
-        //getWindow(tag)?.setVisible(if (isShow) View.VISIBLE else View.GONE, needShow)
     }
 
-    fun show(activity: Activity, tag: String? = null) {
+    fun show(activity: Activity?, tag: String? = null) {
         getWindow(tag)?.show(activity)
     }
 

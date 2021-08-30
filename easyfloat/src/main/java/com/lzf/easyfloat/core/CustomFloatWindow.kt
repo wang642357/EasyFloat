@@ -224,6 +224,13 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
     }
 
     override fun updateFloat(x: Int, y: Int) {
-
+        if (x == -1 && y == -1) {
+            return
+        }
+        if (floatCustomView == null) {
+            return
+        }
+        frameLayout.x = x.toFloat()
+        frameLayout.y = y.toFloat()
     }
 }
