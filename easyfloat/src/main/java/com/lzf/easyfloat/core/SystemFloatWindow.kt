@@ -14,6 +14,7 @@ import android.view.WindowManager.LayoutParams.*
 import android.widget.EditText
 import com.lzf.easyfloat.anim.AnimatorManager
 import com.lzf.easyfloat.data.FloatConfig
+import com.lzf.easyfloat.data.Position
 import com.lzf.easyfloat.enums.ShowPattern
 import com.lzf.easyfloat.interfaces.OnFloatTouchListener
 import com.lzf.easyfloat.utils.DisplayUtils
@@ -25,27 +26,27 @@ import com.lzf.easyfloat.widget.ParentFrameLayout
 /**
  * @author: Liuzhenfeng
  * @date: 12/1/20  23:40
- * @Description:
+ * @Description: 系统的悬浮窗
  */
-internal class FloatingWindowHelper(val context: Context, var config: FloatConfig) {
+internal class SystemFloatWindow(context: Context, config: FloatConfig) :
+    BaseFloatWindow(context, config) {
 
     lateinit var windowManager: WindowManager
     lateinit var params: WindowManager.LayoutParams
-    var frameLayout: ParentFrameLayout? = null
-    private lateinit var touchUtils: TouchUtils
     private var enterAnimator: Animator? = null
     private var lastLayoutMeasureWidth = -1
     private var lastLayoutMeasureHeight = -1
 
-    fun createWindow(): Boolean = if (getToken() == null) {
-        val activity = if (context is Activity) context else LifecycleUtils.getTopActivity()
-        activity?.findViewById<View>(android.R.id.content)?.post { createWindowInner() } ?: false
-    } else {
-        createWindowInner()
-    }
+    override fun createWindow(): Boolean =
+        if (getToken() == null) {
+            val activity = if (context is Activity) context else LifecycleUtils.getTopActivity()
+            activity?.findViewById<View>(android.R.id.content)?.post { createWindowInner() }
+                ?: false
+        } else {
+            createWindowInner()
+        }
 
     private fun createWindowInner(): Boolean = try {
-        touchUtils = TouchUtils(context, config)
         initParams()
         addView()
         config.isShow = true
@@ -97,13 +98,16 @@ internal class FloatingWindowHelper(val context: Context, var config: FloatConfi
         return activity?.window?.decorView?.windowToken
     }
 
+    fun getWindowToken(): IBinder? {
+        return params.token
+    }
+
     /**
      * 将自定义的布局，作为xml布局的父布局，添加到windowManager中，
      * 重写自定义布局的touch事件，实现拖拽效果。
      */
     private fun addView() {
         // 创建一个frameLayout作为浮窗布局的父容器
-        frameLayout = ParentFrameLayout(context, config)
         frameLayout?.tag = config.floatTag
         // 将浮窗布局文件添加到父容器frameLayout中，并返回该浮窗文件
         val floatingView = config.layoutView?.also { frameLayout?.addView(it) }
@@ -114,24 +118,32 @@ internal class FloatingWindowHelper(val context: Context, var config: FloatConfi
         windowManager.addView(frameLayout, params)
 
         // 通过重写frameLayout的Touch事件，实现拖拽效果
+        val position = Position(params.x, params.y)
         frameLayout?.touchListener = object : OnFloatTouchListener {
-            override fun onTouch(event: MotionEvent) =
-                touchUtils.updateFloat(frameLayout!!, event, windowManager, params)
+            override fun onTouch(event: MotionEvent) {
+                touchUtils.updateFloat(frameLayout, event, position) {
+                    windowManager.updateViewLayout(frameLayout, params.apply {
+                        this.x = position.x
+                        this.y = position.y
+                    })
+                }
+            }
         }
 
         // 在浮窗绘制完成的时候，设置初始坐标、执行入场动画
         frameLayout?.layoutListener = object : ParentFrameLayout.OnLayoutListener {
             override fun onLayout() {
                 setGravity(frameLayout)
-                lastLayoutMeasureWidth = frameLayout?.measuredWidth ?: -1
-                lastLayoutMeasureHeight = frameLayout?.measuredHeight ?: -1
+                lastLayoutMeasureWidth = frameLayout.measuredWidth
+                lastLayoutMeasureHeight = frameLayout.measuredHeight
                 config.apply {
                     // 如果设置了过滤当前页，或者后台显示前台创建、前台显示后台创建，隐藏浮窗，否则执行入场动画
                     if (filterSelf
                         || (showPattern == ShowPattern.BACKGROUND && LifecycleUtils.isForeground())
                         || (showPattern == ShowPattern.FOREGROUND && !LifecycleUtils.isForeground())
                     ) {
-                        setVisible(View.GONE)
+                        dismiss(false)
+                        //setVisible(View.GONE)
                         initEditText()
                     } else enterAnim(floatingView)
 
@@ -291,15 +303,16 @@ internal class FloatingWindowHelper(val context: Context, var config: FloatConfi
         windowManager.updateViewLayout(view, params)
     }
 
+    /* */
     /**
      * 设置浮窗的可见性
-     */
+     *//*
     fun setVisible(visible: Int, needShow: Boolean = true) {
-        if (frameLayout == null || frameLayout!!.childCount < 1) return
+        if (frameLayout.childCount < 1) return
         // 如果用户主动隐藏浮窗，则该值为false
         config.needShow = needShow
-        frameLayout!!.visibility = visible
-        val view = frameLayout!!.getChildAt(0)
+        frameLayout.visibility = visible
+        val view = frameLayout.getChildAt(0)
         if (visible == View.VISIBLE) {
             config.isShow = true
             config.callbacks?.show(view)
@@ -309,14 +322,14 @@ internal class FloatingWindowHelper(val context: Context, var config: FloatConfi
             config.callbacks?.hide(view)
             config.floatCallbacks?.builder?.hide?.invoke(view)
         }
-    }
+    }*/
 
     /**
      * 入场动画
      */
     private fun enterAnim(floatingView: View) {
-        if (frameLayout == null || config.isAnim) return
-        enterAnimator = AnimatorManager(frameLayout!!, params, windowManager, config)
+        if (config.isAnim) return
+        enterAnimator = AnimatorManager(frameLayout, params, windowManager, config)
             .enterAnim()?.apply {
                 // 可以延伸到屏幕外，动画结束按需去除该属性，不然旋转屏幕可能置于屏幕外部
                 params.flags =
@@ -349,11 +362,80 @@ internal class FloatingWindowHelper(val context: Context, var config: FloatConfi
         }
     }
 
+    override fun checkShow(activity: Activity) {
+        config.apply {
+            when {
+                // 当前页面的浮窗，不需要处理
+                showPattern == ShowPattern.CURRENT_ACTIVITY -> return@apply
+                // 仅后台显示模式下，隐藏浮窗
+                showPattern == ShowPattern.BACKGROUND -> hide()
+                // 如果没有手动隐藏浮窗，需要考虑过滤信息
+                needShow -> {
+                    if (activity.componentName.className !in filterSet) {
+                        show()
+                    } else {
+                        hide()
+                    }
+                }
+            }
+        }
+    }
+
+    override fun checkDismiss(activity: Activity) {
+        // 如果不是finish，并且处于前台，无需判断
+        if (!activity.isFinishing && LifecycleUtils.isForeground()) return
+        // 判断浮窗是否需要关闭
+        if (activity.isFinishing) {
+            params.token?.let {
+                // 如果token不为空，并且是当前销毁的Activity，关闭浮窗，防止窗口泄漏
+                if (it == activity.window?.decorView?.windowToken) {
+                    remove(true)
+                }
+            }
+        }
+        config.apply {
+            if (!LifecycleUtils.isForeground() && config.showPattern != ShowPattern.CURRENT_ACTIVITY) {
+                // 当app处于后台时，全局、仅后台显示的浮窗，如果没有手动隐藏，需要显示
+                if (showPattern != ShowPattern.FOREGROUND && needShow) {
+                    show()
+                } else {
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    override fun show(activity: Activity?) {
+        if (frameLayout.childCount < 1) return
+        frameLayout.visibility = View.VISIBLE
+        val view = frameLayout.getChildAt(0)
+        config.isShow = true
+        config.callbacks?.show(view)
+        config.floatCallbacks?.builder?.show?.invoke(view)
+    }
+
+    override fun hide(activity: Activity?) {
+        if (frameLayout.childCount < 1) return
+        frameLayout.visibility = View.GONE
+        val view = frameLayout.getChildAt(0)
+        config.isShow = false
+        config.callbacks?.hide(view)
+        config.floatCallbacks?.builder?.hide?.invoke(view)
+    }
+
+    override fun dismiss(anim: Boolean, activity: Activity?) {
+        if (anim) {
+            exitAnim()
+        } else {
+            remove(true)
+        }
+    }
+
     /**
      * 退出动画
      */
-    fun exitAnim() {
-        if (frameLayout == null || (config.isAnim && enterAnimator == null)) return
+    private fun exitAnim() {
+        if ((config.isAnim && enterAnimator == null)) return
         enterAnimator?.cancel()
         val animator: Animator? =
             AnimatorManager(frameLayout!!, params, windowManager, config).exitAnim()
@@ -390,11 +472,19 @@ internal class FloatingWindowHelper(val context: Context, var config: FloatConfi
     /**
      * 更新浮窗坐标
      */
-    fun updateFloat(x: Int, y: Int) {
+    override fun updateFloat(x: Int, y: Int) {
         frameLayout?.let {
             if (x == -1 && y == -1) {
                 // 未指定具体坐标，执行吸附动画
-                it.postDelayed({ touchUtils.updateFloat(it, params, windowManager) }, 200)
+                val position = Position(params.x, params.y)
+                it.postDelayed({
+                    touchUtils.updateFloat(it, position) {
+                        windowManager.updateViewLayout(it, params.apply {
+                            this.x = position.x
+                            this.y = position.y
+                        })
+                    }
+                }, 200)
             } else {
                 params.x = x
                 params.y = y

@@ -10,6 +10,7 @@ import android.widget.*
 import com.lzf.easyfloat.EasyFloat
 import com.lzf.easyfloat.enums.ShowPattern
 import com.lzf.easyfloat.enums.SidePattern
+import com.lzf.easyfloat.enums.WindowType
 import com.lzf.easyfloat.example.R
 import com.lzf.easyfloat.example.logger
 import com.lzf.easyfloat.example.startActivity
@@ -69,7 +70,7 @@ class MainActivity : BaseActivity(), View.OnClickListener {
             open1 -> showActivityFloat(TAG_1)
             hide1 -> EasyFloat.hide(TAG_1)
             show1 -> EasyFloat.show(TAG_1)
-            dismiss1 -> EasyFloat.dismiss(TAG_1)
+            dismiss1 -> EasyFloat.dismiss(TAG_1, this)
 
             open2 -> showActivity2(TAG_2)
             hide2 -> EasyFloat.hide(TAG_2)
@@ -102,8 +103,10 @@ class MainActivity : BaseActivity(), View.OnClickListener {
     private fun showActivityFloat(tag: String) {
         EasyFloat.with(this)
             .setSidePattern(SidePattern.RESULT_HORIZONTAL)
+            .setShowPattern(ShowPattern.ALL_TIME)
             .setImmersionStatusBar(true)
-            .setGravity(Gravity.END, 0, 10)
+            .setWindowType(WindowType.CUSTOM_WINDOW)
+            .setGravity(Gravity.END, 0, 100)
             // 传入View，传入布局文件皆可，如：MyCustomView(this)、R.layout.float_custom
             .setLayout(MyCustomView(this)) {
                 it.findViewById<TextView>(R.id.textView).setOnClickListener { toast() }
@@ -142,7 +145,7 @@ class MainActivity : BaseActivity(), View.OnClickListener {
                         }
 
                         override fun touchUpInRange() {
-                            EasyFloat.dismiss(tag, true)
+                            EasyFloat.dismiss(tag, this@MainActivity)
                         }
                     })
                 }
@@ -166,6 +169,7 @@ class MainActivity : BaseActivity(), View.OnClickListener {
         EasyFloat.with(this)
             .setTag(tag)
             .setGravity(Gravity.CENTER)
+            .setShowPattern(ShowPattern.ALL_TIME)
             .setLayoutChangedGravity(Gravity.END)
             .setLayout(R.layout.float_seekbar) {
                 it.findViewById<ImageView>(R.id.ivClose).setOnClickListener {

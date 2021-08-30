@@ -9,6 +9,7 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import com.lzf.easyfloat.core.FloatingWindowManager
+import com.lzf.easyfloat.core.SystemFloatWindow
 
 /**
  * @author: liuzhenfeng
@@ -31,12 +32,14 @@ object InputMethodUtils {
     @JvmStatic
     @JvmOverloads
     fun openInputMethod(editText: EditText, tag: String? = null) {
-        FloatingWindowManager.getHelper(tag)?.apply {
+        val window = FloatingWindowManager.getWindow(tag)
+        if (window is SystemFloatWindow) {
             // 更改flags，并刷新布局，让系统浮窗获取焦点
-            params.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-            windowManager.updateViewLayout(frameLayout, params)
+            window.apply {
+                params.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                windowManager.updateViewLayout(frameLayout, params)
+            }
         }
-
         Handler(Looper.getMainLooper()).postDelayed({
             // 打开软键盘
             val inputManager =
@@ -50,11 +53,16 @@ object InputMethodUtils {
      */
     @JvmStatic
     @JvmOverloads
-    fun closedInputMethod(tag: String? = null) =
-        FloatingWindowManager.getHelper(tag)?.run {
-            params.flags =
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-            windowManager.updateViewLayout(frameLayout, params)
+    fun closedInputMethod(tag: String? = null) {
+        val window = FloatingWindowManager.getWindow(tag)
+        if (window is SystemFloatWindow) {
+            // 更改flags，并刷新布局，让系统浮窗获取焦点
+            window.apply {
+                params.flags =
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                windowManager.updateViewLayout(frameLayout, params)
+            }
         }
+    }
 
 }

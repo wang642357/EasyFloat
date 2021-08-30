@@ -1,20 +1,19 @@
 package com.lzf.easyfloat
 
 import android.app.Activity
+import android.app.Application
 import android.content.Context
 import android.view.View
 import com.lzf.easyfloat.core.FloatingWindowManager
 import com.lzf.easyfloat.data.FloatConfig
 import com.lzf.easyfloat.enums.ShowPattern
 import com.lzf.easyfloat.enums.SidePattern
+import com.lzf.easyfloat.enums.WindowType
 import com.lzf.easyfloat.interfaces.*
-import com.lzf.easyfloat.interfaces.OnPermissionResult
 import com.lzf.easyfloat.permission.PermissionUtils
-import com.lzf.easyfloat.utils.LifecycleUtils
-import com.lzf.easyfloat.interfaces.FloatCallbacks
 import com.lzf.easyfloat.utils.DisplayUtils
+import com.lzf.easyfloat.utils.LifecycleUtils
 import com.lzf.easyfloat.utils.Logger
-import java.lang.Exception
 
 /**
  * @author: liuzhenfeng
@@ -35,15 +34,20 @@ class EasyFloat {
         fun with(activity: Context): Builder = if (activity is Activity) Builder(activity)
         else Builder(LifecycleUtils.getTopActivity() ?: activity)
 
+        @JvmStatic
+        fun init(application: Application) {
+            LifecycleUtils.setLifecycleCallbacks(application)
+        }
+
         /**
          * 关闭当前浮窗
          * @param tag 浮窗标签
-         * @param force 立即关闭，有退出动画也不执行
+         * @param activity 当前浮窗类型为自定义弹窗时需要传入
          */
         @JvmStatic
         @JvmOverloads
-        fun dismiss(tag: String? = null, force: Boolean = false) =
-            FloatingWindowManager.dismiss(tag, force)
+        fun dismiss(tag: String? = null, activity: Activity? = null) =
+            FloatingWindowManager.dismiss(tag, activity)
 
         /**
          * 隐藏当前浮窗
@@ -51,7 +55,8 @@ class EasyFloat {
          */
         @JvmStatic
         @JvmOverloads
-        fun hide(tag: String? = null) = FloatingWindowManager.visible(false, tag, false)
+        fun hide(tag: String? = null, activity: Activity? = null) =
+            FloatingWindowManager.hide(tag, activity)
 
         /**
          * 设置当前浮窗可见
@@ -97,7 +102,7 @@ class EasyFloat {
         @JvmStatic
         @JvmOverloads
         fun updateFloat(tag: String? = null, x: Int = -1, y: Int = -1) =
-            FloatingWindowManager.getHelper(tag)?.updateFloat(x, y)
+            FloatingWindowManager.getWindow(tag)?.updateFloat(x, y)
 
         // 以下几个方法为：系统浮窗过滤页面的添加、移除、清空
         /**
@@ -152,7 +157,7 @@ class EasyFloat {
          * 获取当前浮窗的config
          * @param tag 浮窗标签
          */
-        private fun getConfig(tag: String?) = FloatingWindowManager.getHelper(tag)?.config
+        private fun getConfig(tag: String?) = FloatingWindowManager.getWindow(tag)?.config
 
         /**
          * 获取当前浮窗的过滤集合
@@ -181,6 +186,12 @@ class EasyFloat {
          * @param showPattern 浮窗显示模式
          */
         fun setShowPattern(showPattern: ShowPattern) = apply { config.showPattern = showPattern }
+
+        /**
+         * 设置浮窗的类型
+         * @param windowType 浮窗类型
+         */
+        fun setWindowType(windowType: WindowType) = apply { config.windowType = windowType }
 
         /**
          * 设置浮窗的布局文件，以及布局的操作接口
@@ -340,6 +351,7 @@ class EasyFloat {
                 callbackCreateFailed(WARN_NO_LAYOUT)
             // 仅当页显示，则直接创建activity浮窗
             config.showPattern == ShowPattern.CURRENT_ACTIVITY -> createFloat()
+            config.windowType == WindowType.CUSTOM_WINDOW -> createFloat()
             // 系统浮窗需要先进行权限审核，有权限则创建app浮窗
             PermissionUtils.checkPermission(activity) -> createFloat()
             // 申请浮窗权限

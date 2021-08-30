@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import cn.bingoogolapple.swipebacklayout.BGASwipeBackHelper
+import com.lzf.easyfloat.EasyFloat
 
 /**
  * @author: liuzhenfeng
@@ -20,6 +21,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         context = this
+        EasyFloat.init(this)
         BGASwipeBackHelper.init(this, null)
     }
 

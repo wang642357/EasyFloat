@@ -6,9 +6,8 @@ import android.content.Context
 import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.View
-import android.view.WindowManager
-import android.view.WindowManager.LayoutParams
 import com.lzf.easyfloat.data.FloatConfig
+import com.lzf.easyfloat.data.Position
 import com.lzf.easyfloat.enums.ShowPattern
 import com.lzf.easyfloat.enums.SidePattern
 import com.lzf.easyfloat.utils.DisplayUtils
@@ -60,8 +59,8 @@ internal class TouchUtils(val context: Context, val config: FloatConfig) {
     fun updateFloat(
         view: View,
         event: MotionEvent,
-        windowManager: WindowManager,
-        params: LayoutParams
+        params: Position,
+        updateViewPosition: () -> Unit
     ) {
         config.callbacks?.touchEvent(view, event)
         config.floatCallbacks?.builder?.touchEvent?.invoke(view, event)
@@ -153,7 +152,7 @@ internal class TouchUtils(val context: Context, val config: FloatConfig) {
                 // 重新设置坐标信息
                 params.x = x
                 params.y = y
-                windowManager.updateViewLayout(view, params)
+                updateViewPosition()
                 config.callbacks?.drag(view, event)
                 config.floatCallbacks?.builder?.drag?.invoke(view, event)
                 // 更新上次触摸点的数据
@@ -173,7 +172,9 @@ internal class TouchUtils(val context: Context, val config: FloatConfig) {
                     SidePattern.RESULT_BOTTOM,
                     SidePattern.RESULT_HORIZONTAL,
                     SidePattern.RESULT_VERTICAL,
-                    SidePattern.RESULT_SIDE -> sideAnim(view, params, windowManager)
+                    SidePattern.RESULT_SIDE -> sideAnim(view, params) {
+                        updateViewPosition()
+                    }
                     else -> {
                         config.callbacks?.dragEnd(view)
                         config.floatCallbacks?.builder?.dragEnd?.invoke(view)
@@ -190,17 +191,19 @@ internal class TouchUtils(val context: Context, val config: FloatConfig) {
      */
     fun updateFloat(
         view: View,
-        params: LayoutParams,
-        windowManager: WindowManager
+        params: Position,
+        updateViewPosition: () -> Unit
     ) {
         initBoarderValue(view, params)
-        sideAnim(view, params, windowManager)
+        sideAnim(view, params) {
+            updateViewPosition()
+        }
     }
 
     /**
      * 初始化边界值等数据
      */
-    private fun initBoarderValue(view: View, params: LayoutParams) {
+    private fun initBoarderValue(view: View, params: Position) {
         // 屏幕宽高需要每次获取，可能会有屏幕旋转、虚拟导航栏的状态变化
         parentWidth = DisplayUtils.getScreenWidth(context)
         parentHeight = config.displayHeight.getDisplayRealHeight(context)
@@ -237,8 +240,8 @@ internal class TouchUtils(val context: Context, val config: FloatConfig) {
 
     private fun sideAnim(
         view: View,
-        params: LayoutParams,
-        windowManager: WindowManager
+        params: Position,
+        updateViewPosition: () -> Unit
     ) {
         initDistanceValue(params)
         val isX: Boolean
@@ -287,7 +290,7 @@ internal class TouchUtils(val context: Context, val config: FloatConfig) {
             try {
                 if (isX) params.x = it.animatedValue as Int else params.y = it.animatedValue as Int
                 // 极端情况，还没吸附就调用了关闭浮窗，会导致吸附闪退
-                windowManager.updateViewLayout(view, params)
+                updateViewPosition()
             } catch (e: Exception) {
                 animator.cancel()
             }
@@ -319,7 +322,7 @@ internal class TouchUtils(val context: Context, val config: FloatConfig) {
     /**
      * 计算一些边界距离数据
      */
-    private fun initDistanceValue(params: LayoutParams) {
+    private fun initDistanceValue(params: Position) {
         leftDistance = params.x - leftBorder
         rightDistance = rightBorder - params.x
         topDistance = params.y - topBorder

@@ -82,7 +82,7 @@ open class BaseActivity : AppCompatActivity(), BGASwipeBackHelper.Delegate {
             }
 
             override fun touchUpInRange() {
-                EasyFloat.dismiss(SwipeTestActivity.FLOAT_TAG, true)
+                EasyFloat.dismiss(SwipeTestActivity.FLOAT_TAG, this@BaseActivity)
             }
         }, showPattern = ShowPattern.ALL_TIME)
 
