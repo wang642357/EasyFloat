@@ -27,12 +27,12 @@ class EasyFloat {
 
         /**
          * 通过上下文，创建浮窗的构建者信息，使浮窗拥有一些默认属性
-         * @param activity 上下文信息，优先使用Activity上下文，因为系统浮窗权限的自动申请，需要使用Activity信息
+         * @param context 上下文信息，优先使用Activity上下文，因为系统浮窗权限的自动申请，需要使用Activity信息
          * @return 浮窗属性构建者
          */
         @JvmStatic
-        fun with(activity: Context): Builder = if (activity is Activity) Builder(activity)
-        else Builder(LifecycleUtils.getTopActivity() ?: activity)
+        fun with(context: Context): Builder =
+            if (context is Activity) Builder(context) else Builder(context)
 
         @JvmStatic
         fun init(application: Application) {

@@ -14,9 +14,10 @@ import com.lzf.easyfloat.widget.ParentFrameLayout
  */
 abstract class BaseFloatWindow(val context: Context, val config: FloatConfig) : FloatWindow {
 
-    internal val frameLayout: ParentFrameLayout = ParentFrameLayout(context, config)
+    internal val frameLayout: ParentFrameLayout =
+        ParentFrameLayout(context.applicationContext, config)
 
-    internal val touchUtils: TouchUtils = TouchUtils(context, config)
+    internal val touchUtils: TouchUtils = TouchUtils(context.applicationContext, config)
 
     fun getWindowType(): WindowType {
         return config.windowType
