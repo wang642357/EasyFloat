@@ -108,9 +108,9 @@ internal class SystemFloatWindow(context: Context, config: FloatConfig) :
      */
     private fun addView() {
         // 创建一个frameLayout作为浮窗布局的父容器
-        frameLayout?.tag = config.floatTag
+        frameLayout.tag = config.floatTag
         // 将浮窗布局文件添加到父容器frameLayout中，并返回该浮窗文件
-        val floatingView = config.layoutView?.also { frameLayout?.addView(it) }
+        val floatingView = config.layoutView?.also { frameLayout.addView(it) }
             ?: LayoutInflater.from(context).inflate(config.layoutId!!, frameLayout, true)
         // 为了避免创建的时候闪一下，我们先隐藏视图，不能直接设置GONE，否则定位会出现问题
         floatingView.visibility = View.INVISIBLE
@@ -118,22 +118,23 @@ internal class SystemFloatWindow(context: Context, config: FloatConfig) :
         windowManager.addView(frameLayout, params)
 
         // 通过重写frameLayout的Touch事件，实现拖拽效果
-        val position = Position(params.x, params.y)
-        frameLayout?.touchListener = object : OnFloatTouchListener {
-            override fun onTouch(event: MotionEvent) {
-                touchUtils.updateFloat(frameLayout, event, position) {
-                    windowManager.updateViewLayout(frameLayout, params.apply {
-                        this.x = position.x
-                        this.y = position.y
-                    })
-                }
-            }
-        }
+
 
         // 在浮窗绘制完成的时候，设置初始坐标、执行入场动画
-        frameLayout?.layoutListener = object : ParentFrameLayout.OnLayoutListener {
+        frameLayout.layoutListener = object : ParentFrameLayout.OnLayoutListener {
             override fun onLayout() {
                 setGravity(frameLayout)
+                val position = Position(params.x, params.y)
+                frameLayout.touchListener = object : OnFloatTouchListener {
+                    override fun onTouch(event: MotionEvent) {
+                        touchUtils.updateFloat(frameLayout, event, position) {
+                            windowManager.updateViewLayout(frameLayout, params.apply {
+                                this.x = position.x
+                                this.y = position.y
+                            })
+                        }
+                    }
+                }
                 lastLayoutMeasureWidth = frameLayout.measuredWidth
                 lastLayoutMeasureHeight = frameLayout.measuredHeight
                 config.apply {
@@ -163,7 +164,7 @@ internal class SystemFloatWindow(context: Context, config: FloatConfig) :
      * 设置布局变化监听，根据变化时的对齐方式，设置浮窗位置
      */
     private fun setChangedListener() {
-        frameLayout?.apply {
+        frameLayout.apply {
             // 监听frameLayout布局完成
             viewTreeObserver?.addOnGlobalLayoutListener {
                 val filterInvalidVal = lastLayoutMeasureWidth == -1 || lastLayoutMeasureHeight == -1
@@ -213,7 +214,7 @@ internal class SystemFloatWindow(context: Context, config: FloatConfig) :
     }
 
     private fun initEditText() {
-        if (config.hasEditText) frameLayout?.let { traverseViewGroup(it) }
+        if (config.hasEditText) traverseViewGroup(frameLayout)
     }
 
     private fun traverseViewGroup(view: View?) {
@@ -302,27 +303,6 @@ internal class SystemFloatWindow(context: Context, config: FloatConfig) :
         // 更新浮窗位置信息
         windowManager.updateViewLayout(view, params)
     }
-
-    /* */
-    /**
-     * 设置浮窗的可见性
-     *//*
-    fun setVisible(visible: Int, needShow: Boolean = true) {
-        if (frameLayout.childCount < 1) return
-        // 如果用户主动隐藏浮窗，则该值为false
-        config.needShow = needShow
-        frameLayout.visibility = visible
-        val view = frameLayout.getChildAt(0)
-        if (visible == View.VISIBLE) {
-            config.isShow = true
-            config.callbacks?.show(view)
-            config.floatCallbacks?.builder?.show?.invoke(view)
-        } else {
-            config.isShow = false
-            config.callbacks?.hide(view)
-            config.floatCallbacks?.builder?.hide?.invoke(view)
-        }
-    }*/
 
     /**
      * 入场动画
@@ -438,7 +418,7 @@ internal class SystemFloatWindow(context: Context, config: FloatConfig) :
         if ((config.isAnim && enterAnimator == null)) return
         enterAnimator?.cancel()
         val animator: Animator? =
-            AnimatorManager(frameLayout!!, params, windowManager, config).exitAnim()
+            AnimatorManager(frameLayout, params, windowManager, config).exitAnim()
         if (animator == null) remove() else {
             // 二次判断，防止重复调用引发异常
             if (config.isAnim) return
@@ -473,23 +453,21 @@ internal class SystemFloatWindow(context: Context, config: FloatConfig) :
      * 更新浮窗坐标
      */
     override fun updateFloat(x: Int, y: Int) {
-        frameLayout?.let {
-            if (x == -1 && y == -1) {
-                // 未指定具体坐标，执行吸附动画
-                val position = Position(params.x, params.y)
-                it.postDelayed({
-                    touchUtils.updateFloat(it, position) {
-                        windowManager.updateViewLayout(it, params.apply {
-                            this.x = position.x
-                            this.y = position.y
-                        })
-                    }
-                }, 200)
-            } else {
-                params.x = x
-                params.y = y
-                windowManager.updateViewLayout(it, params)
-            }
+        if (x == -1 && y == -1) {
+            // 未指定具体坐标，执行吸附动画
+            val position = Position(params.x, params.y)
+            frameLayout.postDelayed({
+                touchUtils.updateFloat(frameLayout, position) {
+                    windowManager.updateViewLayout(frameLayout, params.apply {
+                        this.x = position.x
+                        this.y = position.y
+                    })
+                }
+            }, 200)
+        } else {
+            params.x = x
+            params.y = y
+            windowManager.updateViewLayout(frameLayout, params)
         }
     }
 }

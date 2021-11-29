@@ -11,6 +11,7 @@ import com.lzf.easyfloat.enums.ShowPattern
 import com.lzf.easyfloat.interfaces.OnFloatTouchListener
 import com.lzf.easyfloat.utils.DisplayUtils
 import com.lzf.easyfloat.utils.LifecycleUtils
+import com.lzf.easyfloat.widget.ParentFrameLayout
 
 /**
  * 作者：wangjianxiong
@@ -60,43 +61,41 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
         floatCustomView =
             floatView ?: LayoutInflater.from(context).inflate(config.layoutId!!, frameLayout, false)
         frameLayout.addView(floatCustomView, params)
-        val position = Position(frameLayout.x.toInt(), frameLayout.y.toInt())
-        frameLayout.touchListener = object : OnFloatTouchListener {
-            override fun onTouch(event: MotionEvent) {
-                touchUtils.updateFloat(frameLayout, event, position) {
-                    frameLayout.x = position.x.toFloat()
-                    frameLayout.y = position.y.toFloat()
+        val parentRect = Rect()
+        activity?.windowManager?.defaultDisplay?.getRectSize(parentRect)
+        frameLayout.layoutListener = object : ParentFrameLayout.OnLayoutListener {
+            override fun onLayout() {
+                setGravity(frameLayout, parentRect)
+                val position = Position(frameLayout.x.toInt(), frameLayout.y.toInt())
+
+                frameLayout.touchListener = object : OnFloatTouchListener {
+                    override fun onTouch(event: MotionEvent) {
+                        touchUtils.updateFloat(frameLayout, event, position) {
+                            frameLayout.x = position.x.toFloat()
+                            frameLayout.y = position.y.toFloat()
+                        }
+                    }
+                }
+                lastLayoutMeasureWidth = frameLayout.measuredWidth
+                lastLayoutMeasureHeight = frameLayout.measuredHeight
+                config.apply {
+                    // 如果设置了过滤当前页，或者后台显示前台创建、前台显示后台创建，隐藏浮窗，否则执行入场动画
+                    if (!filterSelf) {
+                        show(activity)
+                    }
+
+                    // 设置callbacks
+                    layoutView = floatView
+                    invokeView?.invoke(floatView)
+                    callbacks?.createdResult(true, null, floatView)
+                    floatCallbacks?.builder?.createdResult?.invoke(true, null, floatView)
                 }
             }
         }
-
-        setGravity(frameLayout)
-        lastLayoutMeasureWidth = frameLayout.measuredWidth
-        lastLayoutMeasureHeight = frameLayout.measuredHeight
-        config.apply {
-            // 如果设置了过滤当前页，或者后台显示前台创建、前台显示后台创建，隐藏浮窗，否则执行入场动画
-            if (filterSelf) {
-                dismiss(false)
-                //setVisible(View.GONE)
-                //initEditText()
-            } else {
-                show(activity)
-            }
-
-            // 设置callbacks
-            layoutView = floatView
-            invokeView?.invoke(floatView)
-            callbacks?.createdResult(true, null, floatView)
-            floatCallbacks?.builder?.createdResult?.invoke(true, null, floatView)
-        }
     }
 
-    private fun setGravity(view: View?) {
+    private fun setGravity(view: View?, parentRect: Rect) {
         if (config.locationPair != Pair(0, 0) || view == null) return
-        val parentRect = Rect()
-        // 获取浮窗所在的矩形
-        frameLayout.getDrawingRect(parentRect)
-        //windowManager.defaultDisplay.getRectSize(parentRect)
         val location = IntArray(2)
         // 获取在整个屏幕内的绝对坐标
         val params = Position(0, 0)
@@ -107,13 +106,13 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
             config.displayHeight.getDisplayRealHeight(context) - statusBarHeight
         when (config.gravity) {
             // 右上
-            Gravity.END, Gravity.END or Gravity.TOP, Gravity.RIGHT, Gravity.RIGHT or Gravity.TOP ->
+            Gravity.END, Gravity.END or Gravity.TOP ->
                 params.x = parentRect.right - view.width
             // 左下
-            Gravity.START or Gravity.BOTTOM, Gravity.BOTTOM, Gravity.LEFT or Gravity.BOTTOM ->
+            Gravity.START or Gravity.BOTTOM, Gravity.BOTTOM ->
                 params.y = parentBottom - view.height
             // 右下
-            Gravity.END or Gravity.BOTTOM, Gravity.RIGHT or Gravity.BOTTOM -> {
+            Gravity.END or Gravity.BOTTOM -> {
                 params.x = parentRect.right - view.width
                 params.y = parentBottom - view.height
             }
@@ -131,10 +130,10 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
                 params.y = parentBottom - view.height
             }
             // 左中
-            Gravity.CENTER_VERTICAL, Gravity.START or Gravity.CENTER_VERTICAL, Gravity.LEFT or Gravity.CENTER_VERTICAL ->
+            Gravity.CENTER_VERTICAL, Gravity.START or Gravity.CENTER_VERTICAL ->
                 params.y = (parentBottom - view.height).shr(1)
             // 右中
-            Gravity.END or Gravity.CENTER_VERTICAL, Gravity.RIGHT or Gravity.CENTER_VERTICAL -> {
+            Gravity.END or Gravity.CENTER_VERTICAL -> {
                 params.x = parentRect.right - view.width
                 params.y = (parentBottom - view.height).shr(1)
             }
@@ -159,7 +158,6 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
         // 更新浮窗位置信息
         frameLayout.x = params.x.toFloat()
         frameLayout.y = params.y.toFloat()
-        //windowManager.updateViewLayout(view, params)
     }
 
     override fun show(activity: Activity?) {
@@ -187,11 +185,15 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
     }
 
     override fun dismiss(anim: Boolean, activity: Activity?) {
-        if (activity == null || activity.isFinishing) {
+        var activityTemp: Activity? = null
+        if (activity == null) {
+            activityTemp = LifecycleUtils.getTopActivity()
+        }
+        if (activityTemp == null || activityTemp.isFinishing) {
             return
         }
         FloatingWindowManager.remove(config.floatTag)
-        (activity.findViewById<View>(R.id.content) as ViewGroup).removeView(frameLayout)
+        (activityTemp.findViewById<View>(R.id.content) as ViewGroup).removeView(frameLayout)
     }
 
     override fun checkShow(activity: Activity) {
@@ -224,6 +226,7 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
     }
 
     override fun updateFloat(x: Int, y: Int) {
+
         if (x == -1 && y == -1) {
             return
         }
