@@ -92,6 +92,6 @@ class SwipeTestActivity : BaseActivity() {
                 }
             }
         }
-        .show()
+        .build()
 
 }

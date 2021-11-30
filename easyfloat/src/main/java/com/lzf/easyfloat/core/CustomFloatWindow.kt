@@ -79,9 +79,8 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
                 lastLayoutMeasureWidth = frameLayout.measuredWidth
                 lastLayoutMeasureHeight = frameLayout.measuredHeight
                 config.apply {
-                    // 如果设置了过滤当前页，或者后台显示前台创建、前台显示后台创建，隐藏浮窗，否则执行入场动画
                     if (!filterSelf) {
-                        show(activity)
+                        show(LifecycleUtils.getTopActivity())
                     }
 
                     // 设置callbacks
@@ -161,7 +160,7 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
     }
 
     override fun show(activity: Activity?) {
-        if (activity == null || activity.isFinishing) {
+        if (activity == null || activity.isFinishing || activity.isDestroyed) {
             return
         }
         if (floatCustomView == null) {
@@ -185,11 +184,11 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
     }
 
     override fun dismiss(anim: Boolean, activity: Activity?) {
-        var activityTemp: Activity? = null
-        if (activity == null) {
+        var activityTemp: Activity? = activity
+        if (activityTemp == null) {
             activityTemp = LifecycleUtils.getTopActivity()
         }
-        if (activityTemp == null || activityTemp.isFinishing) {
+        if (activityTemp == null || activityTemp.isFinishing || activityTemp.isDestroyed) {
             return
         }
         FloatingWindowManager.remove(config.floatTag)

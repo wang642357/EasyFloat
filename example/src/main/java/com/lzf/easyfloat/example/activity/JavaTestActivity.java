@@ -56,7 +56,7 @@ public class JavaTestActivity extends Activity {
 
                         return null;
                     })
-                    .show();
+                    .build();
         });
 
         findViewById(R.id.tvCloseFloat).setOnClickListener(v -> EasyFloat.dismiss(TAG));
@@ -150,7 +150,7 @@ public class JavaTestActivity extends Activity {
                     return null;
                 })
                 // 创建浮窗（这是关键哦😂）
-                .show();
+                .build();
 
 
         // 测试方法重载

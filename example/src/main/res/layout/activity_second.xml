@@ -1,25 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/white2"
-        android:orientation="vertical">
+    android:layout_height="match_parent"
+    android:background="@color/white2"
+    android:orientation="vertical">
 
     <TextView
-            android:id="@+id/tvShow"
-            style="@style/TextStyle2"
-            android:layout_marginTop="120dp"
-            android:text="Show" />
+        android:id="@+id/tvShow"
+        style="@style/TextStyle2"
+        android:layout_marginTop="120dp"
+        android:text="Show" />
 
     <TextView
-            android:id="@+id/openEditTextFloat"
-            style="@style/TextStyle2"
-            android:layout_marginTop="20dp"
-            android:text="OpenEditTextFloat" />
+        android:id="@+id/tvShowCustom"
+        style="@style/TextStyle2"
+        android:text="ShowCustom" />
 
     <TextView
-            android:id="@+id/openJavaTestActivity"
-            style="@style/TextStyle2"
+        android:id="@+id/tvDismissCustom"
+        style="@style/TextStyle2"
+        android:text="dismissCustom" />
+
+    <TextView
+        android:id="@+id/openEditTextFloat"
+        style="@style/TextStyle2"
+        android:layout_marginTop="20dp"
+        android:text="OpenEditTextFloat" />
+
+    <TextView
+        android:id="@+id/openJavaTestActivity"
+        style="@style/TextStyle2"
             android:layout_marginTop="20dp"
             android:text="OpenJavaTestActivity" />
 

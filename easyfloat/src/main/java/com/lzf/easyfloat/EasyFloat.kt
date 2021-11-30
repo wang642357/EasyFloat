@@ -346,7 +346,7 @@ class EasyFloat {
         /**
          * 创建浮窗，包括Activity浮窗和系统浮窗，如若系统浮窗无权限，先进行权限申请
          */
-        fun show() = when {
+        fun build() = when {
             // 未设置浮窗布局文件/布局视图，不予创建
             config.layoutId == null && config.layoutView == null ->
                 callbackCreateFailed(WARN_NO_LAYOUT)

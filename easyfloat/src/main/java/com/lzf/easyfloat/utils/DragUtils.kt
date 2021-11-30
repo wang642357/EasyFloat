@@ -117,7 +117,7 @@ object DragUtils {
                 }
                 dismiss { addView = null }
             }
-            .show()
+            .build()
     }
 
     /**
@@ -167,7 +167,7 @@ object DragUtils {
                 }
                 dismiss { closeView = null }
             }
-            .show()
+            .build()
     }
 
     private fun dismissAdd() = EasyFloat.dismiss(ADD_TAG)

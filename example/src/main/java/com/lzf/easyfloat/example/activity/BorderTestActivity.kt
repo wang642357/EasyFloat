@@ -47,7 +47,7 @@ class BorderTestActivity : BaseActivity() {
             .setBorder(view_bg.left, view_bg.top, view_bg.right, view_bg.bottom)
             .setGravity(Gravity.CENTER)
             .setSidePattern(SidePattern.RESULT_SIDE)
-            .show()
+            .build()
     }
 
 }

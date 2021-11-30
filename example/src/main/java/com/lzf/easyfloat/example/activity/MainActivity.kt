@@ -157,7 +157,7 @@ class MainActivity : BaseActivity(), View.OnClickListener {
                     }
                 }
             }
-            .show()
+            .build()
     }
 
     private fun showActivity2(tag: String) {
@@ -195,7 +195,7 @@ class MainActivity : BaseActivity(), View.OnClickListener {
                         if (layoutContent.visibility == View.VISIBLE) View.GONE else View.VISIBLE
                 }
             }
-            .show()
+            .build()
     }
 
     private fun showAppFloat() {
@@ -265,7 +265,7 @@ class MainActivity : BaseActivity(), View.OnClickListener {
                     }, showPattern = ShowPattern.ALL_TIME)
                 }
             }
-            .show()
+            .build()
     }
 
     private fun showAppFloat2(tag: String) {
@@ -291,7 +291,7 @@ class MainActivity : BaseActivity(), View.OnClickListener {
                     EasyFloat.dismiss(tag)
                 }
             }
-            .show()
+            .build()
     }
 
     /**

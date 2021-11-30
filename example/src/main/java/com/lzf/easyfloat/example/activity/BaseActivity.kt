@@ -102,7 +102,7 @@ open class BaseActivity : AppCompatActivity(), BGASwipeBackHelper.Delegate {
         .setMatchParent(widthMatch = true, heightMatch = true)
         .setDragEnable(false)
         .setAnimator(null)
-        .show()
+        .build()
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {

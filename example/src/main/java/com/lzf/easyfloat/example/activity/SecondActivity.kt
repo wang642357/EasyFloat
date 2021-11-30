@@ -10,14 +10,16 @@ import android.view.WindowManager
 import android.view.animation.BounceInterpolator
 import android.widget.RelativeLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.lzf.easyfloat.EasyFloat
 import com.lzf.easyfloat.anim.DefaultAnimator
 import com.lzf.easyfloat.enums.ShowPattern
 import com.lzf.easyfloat.enums.SidePattern
+import com.lzf.easyfloat.enums.WindowType
 import com.lzf.easyfloat.example.R
 import com.lzf.easyfloat.example.startActivity
-import com.lzf.easyfloat.interfaces.OnDisplayHeight
+import com.lzf.easyfloat.example.widget.MyCustomView
 import com.lzf.easyfloat.interfaces.OnFloatCallbacks
 import com.lzf.easyfloat.utils.DisplayUtils
 import kotlinx.android.synthetic.main.activity_second.*
@@ -38,7 +40,25 @@ class SecondActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_second)
-
+        tvShowCustom.setOnClickListener {
+            val i = Gravity.BOTTOM or Gravity.END
+            EasyFloat.with(this)
+                .setSidePattern(SidePattern.RESULT_HORIZONTAL)
+                .setShowPattern(ShowPattern.FOREGROUND)
+                .setImmersionStatusBar(true)
+                .setWindowType(WindowType.CUSTOM_WINDOW)
+                .setGravity(i, offsetY = -1000)
+                .setLayout(MyCustomView(this)) {
+                    it.findViewById<TextView>(R.id.textView).setOnClickListener {
+                        Toast.makeText(this, "onclick", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .build()
+            finish()
+        }
+        tvDismissCustom.setOnClickListener {
+            EasyFloat.dismiss()
+        }
         tvShow.setOnClickListener {
             EasyFloat.with(this)
                 .setLayout(R.layout.float_top_dialog) {
@@ -67,7 +87,7 @@ class SecondActivity : BaseActivity() {
                     ): Animator? =
                         super.exitAnim(view, params, windowManager, sidePattern)?.setDuration(200)
                 })
-                .show()
+                .build()
         }
 
         openEditTextFloat.setOnClickListener { showEditTextFloat() }
@@ -116,12 +136,12 @@ class SecondActivity : BaseActivity() {
                     EasyFloat.dismiss(tag)
                 }
             }
-            .show()
+            .build()
     }
 
     private fun showFloat() {
 
-        EasyFloat.with(this).setLayout(R.layout.float_app).show()
+        EasyFloat.with(this).setLayout(R.layout.float_app).build()
 
         EasyFloat.with(this)
             // 设置浮窗xml布局文件，并可设置详细信息
@@ -192,7 +212,7 @@ class SecondActivity : BaseActivity() {
 
             })
             // 创建浮窗（这是关键哦😂）
-            .show()
+            .build()
     }
 
 }
