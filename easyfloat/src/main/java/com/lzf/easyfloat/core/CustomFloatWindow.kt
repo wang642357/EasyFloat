@@ -84,10 +84,10 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
                     }
 
                     // 设置callbacks
-                    layoutView = floatView
-                    invokeView?.invoke(floatView)
-                    callbacks?.createdResult(true, null, floatView)
-                    floatCallbacks?.builder?.createdResult?.invoke(true, null, floatView)
+                    layoutView = floatCustomView
+                    invokeView?.invoke(floatCustomView)
+                    callbacks?.createdResult(true, null, floatCustomView)
+                    floatCallbacks?.builder?.createdResult?.invoke(true, null, floatCustomView)
                 }
             }
         }
