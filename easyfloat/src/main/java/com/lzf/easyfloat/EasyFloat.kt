@@ -9,7 +9,12 @@ import com.lzf.easyfloat.data.FloatConfig
 import com.lzf.easyfloat.enums.ShowPattern
 import com.lzf.easyfloat.enums.SidePattern
 import com.lzf.easyfloat.enums.WindowType
-import com.lzf.easyfloat.interfaces.*
+import com.lzf.easyfloat.interfaces.FloatCallbacks
+import com.lzf.easyfloat.interfaces.OnDisplayHeight
+import com.lzf.easyfloat.interfaces.OnFloatAnimator
+import com.lzf.easyfloat.interfaces.OnFloatCallbacks
+import com.lzf.easyfloat.interfaces.OnInvokeView
+import com.lzf.easyfloat.interfaces.OnPermissionResult
 import com.lzf.easyfloat.permission.PermissionUtils
 import com.lzf.easyfloat.utils.DisplayUtils
 import com.lzf.easyfloat.utils.LifecycleUtils
@@ -31,8 +36,7 @@ class EasyFloat {
          * @return 浮窗属性构建者
          */
         @JvmStatic
-        fun with(context: Context): Builder =
-            if (context is Activity) Builder(context) else Builder(context)
+        fun with(context: Context): Builder = Builder(context)
 
         @JvmStatic
         fun init(application: Application) {

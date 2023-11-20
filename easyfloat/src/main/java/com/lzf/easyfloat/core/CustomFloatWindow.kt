@@ -4,7 +4,12 @@ import android.R
 import android.app.Activity
 import android.content.Context
 import android.graphics.Rect
-import android.view.*
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewParent
 import com.lzf.easyfloat.data.FloatConfig
 import com.lzf.easyfloat.data.Position
 import com.lzf.easyfloat.enums.ShowPattern
@@ -174,7 +179,7 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
     }
 
     override fun hide(activity: Activity?) {
-        if (activity == null || activity.isFinishing) {
+        if (activity == null) {
             return
         }
         if (floatCustomView == null) {
@@ -188,10 +193,10 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
         if (activityTemp == null) {
             activityTemp = LifecycleUtils.getTopActivity()
         }
-        if (activityTemp == null || activityTemp.isFinishing || activityTemp.isDestroyed) {
+        FloatingWindowManager.remove(config.floatTag)
+        if (activityTemp == null) {
             return
         }
-        FloatingWindowManager.remove(config.floatTag)
         (activityTemp.findViewById<View>(R.id.content) as ViewGroup).removeView(frameLayout)
     }
 
@@ -214,9 +219,6 @@ class CustomFloatWindow(context: Context, config: FloatConfig) : BaseFloatWindow
     }
 
     override fun checkDismiss(activity: Activity) {
-        if (activity.isFinishing || activity.isDestroyed) {
-            return
-        }
         if (config.showPattern == ShowPattern.CURRENT_ACTIVITY) {
             dismiss(false, activity)
         } else {
